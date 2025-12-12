@@ -69,52 +69,36 @@ export default function JobsList({ token, reloadFlag }) {
     return <div className="text-sm">No jobs yet</div>;
   }
 
-return (
-  <div className="bg-white p-4 rounded shadow">
-    <h3 className="font-semibold mb-3">Jobs</h3>
+  return (
+    <div className="bg-white p-4 rounded shadow">
+      <h3 className="font-semibold mb-3">Latest Analysis</h3>
 
-    {loading && <div className="text-sm">Loading…</div>}
-
-    {job?.status === "running" && (
-      <div className="text-sm text-gray-500 mb-2">
-        Analysis is running… results will appear automatically
+      <div className="mb-2">
+        Status:{" "}
+        {job.status === "completed" && "✅ Completed"}
+        {job.status === "running" && "⏳ Running"}
+        {job.status === "failed" && "❌ Failed"}
       </div>
-    )}
 
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b">
-          <th className="text-left py-2">Status</th>
-          <th className="text-left">Created</th>
-          <th className="text-left">Results</th>
-        </tr>
-      </thead>
-      <tbody>
-        {job && (
-          <tr className="border-b">
-            <td className="py-2">
-              {job.status === "completed" ? "✅ Completed" :
-               job.status === "running" ? "⏳ Running" :
-               "❌ Failed"}
-            </td>
-            <td>{new Date(job.created_at).toLocaleString()}</td>
-            <td>
-              {job.result_files?.map(f => (
-                <a
-                  key={f}
-                  href={`${import.meta.env.VITE_API_BASE}/jobs/${job.id}/download/${f}`}
-                  className="text-blue-600 block"
-                  target="_blank"
-                >
-                  {f}
-                </a>
-              ))}
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-);
+      {job.status === "failed" && (
+        <div className="text-red-600 text-sm">
+          {job.error}
+        </div>
+      )}
 
+      {job.status === "completed" && (
+        <div className="mt-3">
+          <div className="font-medium mb-1">Results</div>
+          {job.result_files.map((f) => (
+            <ResultLink
+              key={f}
+              jobId={job.id}
+              filename={f}
+              token={token}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
