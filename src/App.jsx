@@ -3,10 +3,10 @@ import RunAnalysis from "./RunAnalysis";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import Login from "./Login";
-const [reloadFlag, setReloadFlag] = useState(0);
 
 export default function App() {
   const [session, setSession] = useState(null);
+  const [reloadFlag, setReloadFlag] = useState(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -22,28 +22,28 @@ export default function App() {
 
   if (!session) return <Login />;
 
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Dashboard</h2>
-            <button
-              onClick={() => supabase.auth.signOut()}
-              className="text-sm text-red-600"
-            >
-              Sign out
-            </button>
-          </div>
-
-          <UploadCsv token={session.access_token} />
-          <RunAnalysis
-              token={session.access_token}
-              onDone={() => setReloadFlag(v => v + 1)}
-            />
-
-          {/* jobs table will go here next */}
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold">Dashboard</h2>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="text-sm text-red-600"
+          >
+            Sign out
+          </button>
         </div>
-      </div>
-    );
 
+        <UploadCsv token={session.access_token} />
+
+        <RunAnalysis
+          token={session.access_token}
+          onDone={() => setReloadFlag(v => v + 1)}
+        />
+
+        {/* jobs table will go here next */}
+      </div>
+    </div>
+  );
 }
