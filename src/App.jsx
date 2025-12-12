@@ -1,4 +1,5 @@
 import UploadCsv from "./UploadCsv";
+import RunAnalysis from "./RunAnalysis";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import Login from "./Login";
@@ -34,7 +35,8 @@ export default function App() {
           </div>
 
           <UploadCsv token={session.access_token} />
-
+          <RunAnalysis token={session.access_token} />
+          
           {/* jobs table will go here next */}
         </div>
       </div>
