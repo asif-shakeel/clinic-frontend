@@ -2,6 +2,8 @@ import { useState } from "react";
 
 export default function RunAnalysis({ token, onDone, disabled }) {
   const [loading, setLoading] = useState(false);
+  const [startDate, setStartDate] = useState("2024-01-01");
+  const [endDate, setEndDate] = useState("2024-03-31");
 
   async function run() {
     if (disabled || loading) return;
@@ -9,7 +11,7 @@ export default function RunAnalysis({ token, onDone, disabled }) {
     setLoading(true);
 
     await fetch(
-      `${import.meta.env.VITE_API_BASE}/analyze?start_date=2024-01-01&end_date=2024-03-31`,
+      `${import.meta.env.VITE_API_BASE}/analyze?start_date=${startDate}&end_date=${endDate}`,
       {
         method: "POST",
         headers: {
@@ -23,7 +25,23 @@ export default function RunAnalysis({ token, onDone, disabled }) {
   }
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 space-y-2">
+      <div className="flex gap-2">
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="border px-2 py-1 rounded"
+        />
+
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="border px-2 py-1 rounded"
+        />
+      </div>
+
       <button
         onClick={run}
         disabled={disabled || loading}
@@ -37,7 +55,7 @@ export default function RunAnalysis({ token, onDone, disabled }) {
       </button>
 
       {disabled && !loading && (
-        <div className="text-sm text-gray-500 mt-1">
+        <div className="text-sm text-gray-500">
           An analysis is already running
         </div>
       )}
