@@ -1,104 +1,60 @@
 import { useEffect, useState } from "react";
 
 export default function JobsList({ token, reloadFlag }) {
-  const [jobs, setJobs] = useState([]);
+  const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(false);
 
   async function loadJobs() {
-    try {
-      setLoading(true);
-      const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/jobs`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!res.ok) {
-        console.error("Failed to fetch jobs");
-        return;
+    setLoading(true);
+    const res = await fetch(
+      `${import.meta.env.VITE_API_BASE}/jobs`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
       }
-
-      const data = await res.json();
-      setJobs(data);
-    } catch (err) {
-      console.error("Jobs fetch error:", err);
-    } finally {
-      setLoading(false);
-    }
+    );
+    const data = await res.json();
+    setJob(data[0] ?? null);
+    setLoading(false);
   }
 
   useEffect(() => {
-    // initial load
     loadJobs();
+    const id = setInterval(loadJobs, 5000); // poll
+    return () => clearInterval(id);
+  }, [reloadFlag]);
 
-    // poll every 5 seconds
-    const interval = setInterval(() => {
-      loadJobs();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [reloadFlag, token]);
+  if (loading) return <div>Loading job…</div>;
+  if (!job) return <div>No jobs yet</div>;
 
   return (
     <div className="bg-white p-4 rounded shadow">
-      <h3 className="font-semibold mb-3">Jobs</h3>
+      <h3 className="font-semibold mb-3">Latest Analysis</h3>
 
-      {loading && <div className="text-sm mb-2">Loading…</div>}
+      <div className="mb-2">
+        Status:{" "}
+        {job.status === "completed" && "✅ Completed"}
+        {job.status === "running" && "⏳ Running"}
+        {job.status === "failed" && "❌ Failed"}
+      </div>
 
-      {jobs.length === 0 && !loading && (
-        <div className="text-sm text-gray-500">
-          No jobs yet
+      {job.status === "failed" && (
+        <div className="text-red-600 text-sm">
+          {job.error}
         </div>
       )}
 
-      {jobs.length > 0 && (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left py-2">Status</th>
-              <th className="text-left">Created</th>
-              <th className="text-left">Results</th>
-            </tr>
-          </thead>
-          <tbody>
-            {jobs.map(job => (
-              <tr key={job.id} className="border-b">
-                <td className="py-2">
-                  {job.status === "completed" && "✅ Completed"}
-                  {job.status === "running" && "⏳ Running"}
-                  {job.status === "failed" && "❌ Failed"}
-                </td>
-
-                <td>
-                  {new Date(job.created_at).toLocaleString()}
-                </td>
-
-                <td>
-                  {job.result_files?.length > 0 ? (
-                    job.result_files.map(file => (
-                      <a
-                        key={file}
-                        href={`${import.meta.env.VITE_API_BASE}/jobs/${job.id}/download/${file}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 block"
-                      >
-                        {file}
-                      </a>
-                    ))
-                  ) : (
-                    <span className="text-gray-400">
-                      —
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {job.status === "completed" && (
+        <div className="mt-3">
+          <div className="font-medium mb-1">Results</div>
+          {job.result_files.map((f) => (
+            <ResultLink
+              key={f}
+              jobId={job.id}
+              filename={f}
+              token={token}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
