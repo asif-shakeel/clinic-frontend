@@ -3,6 +3,7 @@ import RunAnalysis from "./RunAnalysis";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import Login from "./Login";
+const [reloadFlag, setReloadFlag] = useState(0);
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -35,8 +36,11 @@ export default function App() {
           </div>
 
           <UploadCsv token={session.access_token} />
-          <RunAnalysis token={session.access_token} />
-          
+          <RunAnalysis
+              token={session.access_token}
+              onDone={() => setReloadFlag(v => v + 1)}
+            />
+
           {/* jobs table will go here next */}
         </div>
       </div>

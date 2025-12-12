@@ -27,7 +27,10 @@ export default function RunAnalysis({ token, onDone }) {
     }
 
     setStatus("Job started ✅");
+    setTimeout(() => {
     onDone?.();
+    }, 500);
+
   }
 
   return (
