@@ -1,30 +1,69 @@
 import { useEffect, useState } from "react";
 
+function ResultLink({ jobId, filename, token }) {
+  async function download() {
+    const res = await fetch(
+      `${import.meta.env.VITE_API_BASE}/jobs/${jobId}/download/${filename}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (!res.ok) {
+      alert("Failed to generate download link");
+      return;
+    }
+
+    const { url } = await res.json();
+    window.location.href = url;
+  }
+
+  return (
+    <button
+      onClick={download}
+      className="text-blue-600 block underline text-left"
+    >
+      {filename}
+    </button>
+  );
+}
+
 export default function JobsList({ token, reloadFlag }) {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(false);
 
   async function loadJobs() {
     setLoading(true);
+
     const res = await fetch(
       `${import.meta.env.VITE_API_BASE}/jobs`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
+
     const data = await res.json();
+
+    // Only keep the most recent job
     setJob(data[0] ?? null);
     setLoading(false);
   }
 
   useEffect(() => {
     loadJobs();
-    const id = setInterval(loadJobs, 5000); // poll
+
+    // Poll every 5 seconds while page is open
+    const id = setInterval(loadJobs, 5000);
     return () => clearInterval(id);
   }, [reloadFlag]);
 
-  if (loading) return <div>Loading job…</div>;
-  if (!job) return <div>No jobs yet</div>;
+  if (loading) {
+    return <div className="text-sm">Loading job…</div>;
+  }
+
+  if (!job) {
+    return <div className="text-sm">No jobs yet</div>;
+  }
 
   return (
     <div className="bg-white p-4 rounded shadow">
