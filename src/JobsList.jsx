@@ -15,7 +15,13 @@ function ResultLink({ jobId, filename, token }) {
     }
 
     const { url } = await res.json();
-    window.location.href = url;
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   return (
@@ -27,6 +33,7 @@ function ResultLink({ jobId, filename, token }) {
     </button>
   );
 }
+
 
 export default function JobsList({ token, reloadFlag }) {
   const [job, setJob] = useState(null);
@@ -79,6 +86,13 @@ export default function JobsList({ token, reloadFlag }) {
         {job.status === "running" && "⏳ Running"}
         {job.status === "failed" && "❌ Failed"}
       </div>
+
+        {job.status === "running" && (
+        <div className="text-sm text-gray-500 mb-2">
+            Analysis is running… results will appear automatically.
+        </div>
+        )}
+
 
       {job.status === "failed" && (
         <div className="text-red-600 text-sm">
