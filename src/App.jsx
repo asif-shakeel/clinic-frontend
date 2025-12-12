@@ -4,12 +4,13 @@ import JobsList from "./JobsList";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import Login from "./Login";
-const [latestJobStatus, setLatestJobStatus] = useState(null);
+
 
 export default function App() {
   const [session, setSession] = useState(null);
   const [reloadFlag, setReloadFlag] = useState(0);
-
+  const [latestJobStatus, setLatestJobStatus] = useState(null);
+  
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
