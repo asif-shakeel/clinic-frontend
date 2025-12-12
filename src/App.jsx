@@ -4,6 +4,7 @@ import JobsList from "./JobsList";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import Login from "./Login";
+const [latestJobStatus, setLatestJobStatus] = useState(null);
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -40,12 +41,16 @@ export default function App() {
 
         <RunAnalysis
           token={session.access_token}
+          disabled={latestJobStatus === "running"}
           onDone={() => setReloadFlag(v => v + 1)}
         />
-        <JobsList
-          token={session.access_token}
-          reloadFlag={reloadFlag}
-        />
+
+      <JobsList
+        token={session.access_token}
+        reloadFlag={reloadFlag}
+        onStatusChange={setLatestJobStatus}
+      />
+
 
         {/* jobs table will go here next */}
       </div>

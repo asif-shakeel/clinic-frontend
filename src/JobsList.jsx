@@ -35,7 +35,7 @@ function ResultLink({ jobId, filename, token }) {
 }
 
 
-export default function JobsList({ token, reloadFlag }) {
+export default function JobsList({ token, reloadFlag, onStatusChange }) {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -53,6 +53,8 @@ export default function JobsList({ token, reloadFlag }) {
 
     // Only keep the most recent job
     setJob(data[0] ?? null);
+    onStatusChange?.(data[0]?.status ?? null);
+
     setLoading(false);
   }
 

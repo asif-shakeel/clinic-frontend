@@ -1,64 +1,46 @@
 import { useState } from "react";
 
-export default function RunAnalysis({ token, onDone }) {
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
-  const [status, setStatus] = useState("");
+export default function RunAnalysis({ token, onDone, disabled }) {
+  const [loading, setLoading] = useState(false);
 
   async function run() {
-    setStatus("Running analysis…");
+    if (disabled || loading) return;
 
-    const params = new URLSearchParams();
-    if (start) params.append("start_date", start);
-    if (end) params.append("end_date", end);
+    setLoading(true);
 
-    const res = await fetch(
-      `${import.meta.env.VITE_API_BASE}/analyze?${params.toString()}`,
+    await fetch(
+      `${import.meta.env.VITE_API_BASE}/analyze?start_date=2024-01-01&end_date=2024-03-31`,
       {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
     );
 
-    if (!res.ok) {
-      const err = await res.text();
-      setStatus(`Error: ${err}`);
-      return;
-    }
-
-    setStatus("Job started ✅");
-    setTimeout(() => {
-    onDone?.();
-    }, 500);
-
+    setLoading(false);
+    onDone();
   }
 
   return (
-    <div className="bg-white p-4 rounded shadow mb-6">
-      <h3 className="font-semibold mb-2">Run Analysis</h3>
+    <div className="mb-4">
+      <button
+        onClick={run}
+        disabled={disabled || loading}
+        className={`px-4 py-2 rounded text-white ${
+          disabled || loading
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700"
+        }`}
+      >
+        {loading ? "Starting analysis…" : "Run Analysis"}
+      </button>
 
-      <div className="flex gap-4 mb-3">
-        <input
-          type="date"
-          value={start}
-          onChange={(e) => setStart(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          type="date"
-          value={end}
-          onChange={(e) => setEnd(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <button
-          onClick={run}
-          className="bg-blue-600 text-white px-4 rounded"
-        >
-          Run
-        </button>
-      </div>
-
-      {status && <div className="text-sm">{status}</div>}
+      {disabled && !loading && (
+        <div className="text-sm text-gray-500 mt-1">
+          An analysis is already running
+        </div>
+      )}
     </div>
   );
 }
