@@ -7,13 +7,17 @@ import Login from "./Login";
 
 export default function App() {
   const [session, setSession] = useState(null);
+
   const [analyses, setAnalyses] = useState(null);
   const [analysisKey, setAnalysisKey] = useState(null);
+
+  const [files, setFiles] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState({});
 
   const [currentJobId, setCurrentJobId] = useState(null);
   const [latestJobStatus, setLatestJobStatus] = useState(null);
 
-  // ---- auth ----
+  // AUTH
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -26,42 +30,45 @@ export default function App() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  // ---- fetch analyses AFTER login ----
+  // LOAD ANALYSES
   useEffect(() => {
     if (!session) return;
 
-    async function loadAnalyses() {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_BASE}/analyses`,
-        {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        }
-      );
+    fetch(`${import.meta.env.VITE_API_BASE}/analyses`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        setAnalyses(data);
+        setAnalysisKey(Object.keys(data)[0]);
+      });
+  }, [session]);
 
-      const data = await res.json();
-      setAnalyses(data);
+  // LOAD FILES
+  useEffect(() => {
+    if (!session) return;
 
-      // default to first analysis
-      const firstKey = Object.keys(data)[0];
-      setAnalysisKey(firstKey);
-    }
-
-    loadAnalyses();
+    fetch(`${import.meta.env.VITE_API_BASE}/files`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    })
+      .then((r) => r.json())
+      .then((data) => setFiles(data));
   }, [session]);
 
   if (!session) return <Login />;
-  if (!analyses || !analysisKey) {
-    return <div className="p-6 text-sm">Loading analyses…</div>;
-  }
+  if (!analyses || !analysisKey) return <div>Loading…</div>;
 
   const analysis = analyses[analysisKey];
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-3xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+
+        <div className="flex justify-between mb-6">
           <h2 className="text-xl font-semibold">Dashboard</h2>
           <button
             onClick={() => supabase.auth.signOut()}
@@ -71,44 +78,67 @@ export default function App() {
           </button>
         </div>
 
-        {/* Analysis selector */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Analysis Type
-          </label>
-          <select
-            value={analysisKey}
-            onChange={(e) => setAnalysisKey(e.target.value)}
-            className="border p-2 rounded w-full"
-          >
-            {Object.entries(analyses).map(([key, a]) => (
-              <option key={key} value={key}>
-                {a.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* ANALYSIS SELECTOR */}
+        <select
+          className="border p-2 rounded w-full mb-4"
+          value={analysisKey}
+          onChange={(e) => {
+            setAnalysisKey(e.target.value);
+            setSelectedFiles({});
+          }}
+        >
+          {Object.entries(analyses).map(([k, a]) => (
+            <option key={k} value={k}>
+              {a.label}
+            </option>
+          ))}
+        </select>
 
-        {/* Upload files */}
+        {/* FILE ASSIGNMENT */}
         {Object.entries(analysis.files).map(([role, cfg]) => (
-          <UploadCsv
-            key={role}
-            token={session.access_token}
-            analysisKey={analysisKey}
-            fileRole={role}
-            requiredColumns={cfg.required_columns}
-          />
+          <div key={role} className="mb-4 p-3 bg-white rounded border">
+            <div className="font-medium mb-1 capitalize">{role}</div>
+
+            <div className="text-xs text-gray-500 mb-2">
+              Required columns:{" "}
+              <span className="font-mono">
+                {cfg.required_columns.join(", ")}
+              </span>
+            </div>
+
+            <select
+              className="border p-2 rounded w-full"
+              value={selectedFiles[role] || ""}
+              onChange={(e) =>
+                setSelectedFiles((prev) => ({
+                  ...prev,
+                  [role]: e.target.value,
+                }))
+              }
+            >
+              <option value="">Select file</option>
+              {files.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.filename}
+                </option>
+              ))}
+            </select>
+          </div>
         ))}
 
-        {/* Run analysis */}
+        {/* OPTIONAL UPLOAD */}
+        <UploadCsv token={session.access_token} />
+
+        {/* RUN */}
         <RunAnalysis
           token={session.access_token}
           analysisKey={analysisKey}
+          selectedFiles={selectedFiles}
           disabled={latestJobStatus === "running"}
-          onDone={(jobId) => setCurrentJobId(jobId)}
+          onDone={setCurrentJobId}
         />
 
-        {/* Job status + results */}
+        {/* JOBS */}
         <JobsList
           token={session.access_token}
           jobId={currentJobId}
