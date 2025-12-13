@@ -1,9 +1,4 @@
-export default function UploadCsv({
-  token,
-  analysisKey,
-  fileRole,
-  requiredColumns,
-}) {
+export default function UploadCsv({ token }) {
   async function upload(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -11,8 +6,8 @@ export default function UploadCsv({
     const form = new FormData();
     form.append("file", file);
 
-    await fetch(
-      `${import.meta.env.VITE_API_BASE}/upload?analysis_key=${analysisKey}&file_role=${fileRole}`,
+    const res = await fetch(
+      `${import.meta.env.VITE_API_BASE}/upload_file`,
       {
         method: "POST",
         headers: {
@@ -22,26 +17,21 @@ export default function UploadCsv({
       }
     );
 
-    const data = await res.json();
-    alert(`${data.filename} uploaded`);
+    if (!res.ok) {
+      alert("Upload failed");
+      return;
+    }
 
+    alert("File uploaded");
+    window.location.reload(); // simplest refresh of file list
   }
 
   return (
-    <div className="mb-4">
-      <label className="block text-sm mb-1 capitalize">
-        Upload {fileRole} file
+    <div className="mb-4 p-3 bg-white rounded border">
+      <label className="block text-sm mb-1">
+        Upload a CSV file
       </label>
-
       <input type="file" accept=".csv" onChange={upload} />
-
-      {/* REQUIRED COLUMNS DISPLAY */}
-      <div className="mt-1 text-xs text-gray-500">
-        Required columns:
-        <span className="ml-1 font-mono">
-          {(requiredColumns || []).join(", ")}
-        </span>
-      </div>
     </div>
   );
 }
