@@ -37,7 +37,7 @@ export default function UploadCsv({
       <div className="mt-1 text-xs text-gray-500">
         Required columns:
         <span className="ml-1 font-mono">
-          {requiredColumns.join(", ")}
+          {(requiredColumns || []).join(", ")}
         </span>
       </div>
     </div>
