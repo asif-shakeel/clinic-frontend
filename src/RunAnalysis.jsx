@@ -10,7 +10,7 @@ export default function RunAnalysis({ token, onDone, disabled, analysisKey }) {
 
     setLoading(true);
 
-    await fetch(
+    const res = await fetch(
       `${import.meta.env.VITE_API_BASE}/analyze?analysis_key=${analysisKey}&start_date=${startDate}&end_date=${endDate}`,
       {
         method: "POST",
@@ -20,8 +20,12 @@ export default function RunAnalysis({ token, onDone, disabled, analysisKey }) {
       }
     );
 
+    const data = await res.json(); // ← IMPORTANT
+
     setLoading(false);
-    onDone();
+
+    // Pass the job_id upward so the UI tracks THIS job
+    onDone(data.job_id);
   }
 
   return (

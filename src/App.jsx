@@ -6,14 +6,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import Login from "./Login";
 
-
-
 export default function App() {
   const [session, setSession] = useState(null);
-  const [reloadFlag, setReloadFlag] = useState(0);
-  const [latestJobStatus, setLatestJobStatus] = useState(null);
   const [analysisKey, setAnalysisKey] = useState("basic_clinic");
-  
+
+  const [currentJobId, setCurrentJobId] = useState(null);
+  const [latestJobStatus, setLatestJobStatus] = useState(null);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -41,6 +40,7 @@ export default function App() {
           </button>
         </div>
 
+        {/* Analysis selector */}
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1">
             Analysis Type
@@ -58,6 +58,7 @@ export default function App() {
           </select>
         </div>
 
+        {/* Upload required files */}
         {ANALYSES[analysisKey].files.map((role) => (
           <UploadCsv
             key={role}
@@ -67,21 +68,20 @@ export default function App() {
           />
         ))}
 
+        {/* Run analysis */}
         <RunAnalysis
           token={session.access_token}
           analysisKey={analysisKey}
-          onDone={() => setReloadFlag(v => v + 1)}
+          disabled={latestJobStatus === "running"}
+          onDone={(jobId) => setCurrentJobId(jobId)}
         />
 
-
+        {/* Job status + results */}
         <JobsList
           token={session.access_token}
+          jobId={currentJobId}
           onStatusChange={setLatestJobStatus}
         />
-
-
-
-        {/* jobs table will go here next */}
       </div>
     </div>
   );

@@ -34,32 +34,44 @@ function ResultLink({ jobId, filename, token }) {
   );
 }
 
-export default function JobsList({ token, onStatusChange }) {
+export default function JobsList({ token, jobId, onStatusChange }) {
   const [job, setJob] = useState(null);
 
-  async function loadLatestJob() {
+  async function loadJob() {
+    // If we know the job ID, fetch that job
+    if (jobId) {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE}/jobs`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      const found = data.find(j => j.id === jobId) ?? null;
+      setJob(found);
+      onStatusChange?.(found?.status ?? null);
+      return;
+    }
+
+    // Fallback: latest job
     const res = await fetch(
       `${import.meta.env.VITE_API_BASE}/jobs`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
-
     const data = await res.json();
     const latest = data[0] ?? null;
-
     setJob(latest);
     onStatusChange?.(latest?.status ?? null);
   }
 
   // Initial load
   useEffect(() => {
-    loadLatestJob();
-  }, []);
+    loadJob();
+  }, [jobId]);
 
   // Poll ONLY while running
   useEffect(() => {
     if (!job || job.status !== "running") return;
 
-    const id = setInterval(loadLatestJob, 2000);
+    const id = setInterval(loadJob, 2000);
     return () => clearInterval(id);
   }, [job?.status]);
 
