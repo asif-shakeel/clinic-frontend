@@ -22,7 +22,9 @@ export default function UploadCsv({
       }
     );
 
-    alert(`${fileRole} uploaded`);
+    const data = await res.json();
+    alert(`${data.filename} uploaded`);
+
   }
 
   return (
