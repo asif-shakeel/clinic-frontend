@@ -34,52 +34,41 @@ function ResultLink({ jobId, filename, token }) {
   );
 }
 
-
-export default function JobsList({ token, reloadFlag, onStatusChange }) {
+export default function JobsList({ token, onStatusChange }) {
   const [job, setJob] = useState(null);
-  const [loading, setLoading] = useState(false);
 
-  async function loadJobs() {
-    setLoading(true);
-
+  async function loadLatestJob() {
     const res = await fetch(
       `${import.meta.env.VITE_API_BASE}/jobs`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
+      { headers: { Authorization: `Bearer ${token}` } }
     );
 
     const data = await res.json();
+    const latest = data[0] ?? null;
 
-    // Only keep the most recent job
-    setJob(data[0] ?? null);
-    onStatusChange?.(data[0]?.status ?? null);
-
-    setLoading(false);
+    setJob(latest);
+    onStatusChange?.(latest?.status ?? null);
   }
 
-    useEffect(() => {
-    loadJobs();
-    }, [reloadFlag]);
+  // Initial load
+  useEffect(() => {
+    loadLatestJob();
+  }, []);
 
-    useEffect(() => {
+  // Poll ONLY while running
+  useEffect(() => {
     if (!job || job.status !== "running") return;
 
-    const id = setInterval(loadJobs, 2000);
+    const id = setInterval(loadLatestJob, 2000);
     return () => clearInterval(id);
-    }, [job?.status]);
-
-
-  if (loading) {
-    return <div className="text-sm">Loading job…</div>;
-  }
+  }, [job?.status]);
 
   if (!job) {
-    return <div className="text-sm">No jobs yet</div>;
+    return <div className="text-sm">No analysis yet</div>;
   }
 
   return (
-    <div className="bg-white p-4 rounded shadow">
+    <div className="bg-white p-4 rounded shadow mt-4">
       <h3 className="font-semibold mb-3">Latest Analysis</h3>
 
       <div className="mb-2">
@@ -89,17 +78,14 @@ export default function JobsList({ token, reloadFlag, onStatusChange }) {
         {job.status === "failed" && "❌ Failed"}
       </div>
 
-        {job.status === "running" && (
+      {job.status === "running" && (
         <div className="text-sm text-gray-500 mb-2">
-            Analysis is running… results will appear automatically.
+          Analysis is running… results will appear automatically.
         </div>
-        )}
-
+      )}
 
       {job.status === "failed" && (
-        <div className="text-red-600 text-sm">
-          {job.error}
-        </div>
+        <div className="text-red-600 text-sm">{job.error}</div>
       )}
 
       {job.status === "completed" && (

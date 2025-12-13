@@ -74,11 +74,11 @@ export default function App() {
         />
 
 
-      <JobsList
-        token={session.access_token}
-        reloadFlag={reloadFlag}
-        onStatusChange={setLatestJobStatus}
-      />
+        <JobsList
+          token={session.access_token}
+          onStatusChange={setLatestJobStatus}
+        />
+
 
 
         {/* jobs table will go here next */}
