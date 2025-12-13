@@ -1,18 +1,19 @@
 import UploadCsv from "./UploadCsv";
 import RunAnalysis from "./RunAnalysis";
 import JobsList from "./JobsList";
-import { ANALYSES } from "./analyses";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import Login from "./Login";
 
 export default function App() {
   const [session, setSession] = useState(null);
-  const [analysisKey, setAnalysisKey] = useState("basic_clinic");
+  const [analyses, setAnalyses] = useState(null);
+  const [analysisKey, setAnalysisKey] = useState(null);
 
   const [currentJobId, setCurrentJobId] = useState(null);
   const [latestJobStatus, setLatestJobStatus] = useState(null);
 
+  // ---- auth ----
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -25,7 +26,37 @@ export default function App() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // ---- fetch analyses AFTER login ----
+  useEffect(() => {
+    if (!session) return;
+
+    async function loadAnalyses() {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE}/analyses`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+      setAnalyses(data);
+
+      // default to first analysis
+      const firstKey = Object.keys(data)[0];
+      setAnalysisKey(firstKey);
+    }
+
+    loadAnalyses();
+  }, [session]);
+
   if (!session) return <Login />;
+  if (!analyses || !analysisKey) {
+    return <div className="p-6 text-sm">Loading analyses…</div>;
+  }
+
+  const analysis = analyses[analysisKey];
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -50,7 +81,7 @@ export default function App() {
             onChange={(e) => setAnalysisKey(e.target.value)}
             className="border p-2 rounded w-full"
           >
-            {Object.entries(ANALYSES).map(([key, a]) => (
+            {Object.entries(analyses).map(([key, a]) => (
               <option key={key} value={key}>
                 {a.label}
               </option>
@@ -58,23 +89,16 @@ export default function App() {
           </select>
         </div>
 
-        {/* Upload required files */}
-        {Object.entries(ANALYSES[analysisKey].files).map(
-        ([role, config]) => (
+        {/* Upload files */}
+        {Object.entries(analysis.files).map(([role, cfg]) => (
           <UploadCsv
             key={role}
             token={session.access_token}
             analysisKey={analysisKey}
             fileRole={role}
-            requiredColumns={
-              (config.required_columns ?? []).map(c =>
-                c.toLowerCase().replace(/\s+/g, "_")
-              )
-            }
+            requiredColumns={cfg.required_columns}
           />
-        )
-        )}
-
+        ))}
 
         {/* Run analysis */}
         <RunAnalysis
