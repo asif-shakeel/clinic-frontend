@@ -127,7 +127,17 @@ export default function App() {
         ))}
 
         {/* OPTIONAL UPLOAD */}
-        <UploadCsv token={session.access_token} />
+        {analysisKey &&
+          Object.keys(analysis.files).map((role) => (
+            <UploadCsv
+              key={role}
+              token={session.access_token}
+              analysisKey={analysisKey}
+              fileRole={role}
+            />
+          ))
+        }
+
 
         {/* RUN */}
         <RunAnalysis
