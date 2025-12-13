@@ -59,14 +59,20 @@ export default function App() {
         </div>
 
         {/* Upload required files */}
-        {ANALYSES[analysisKey].files.map((role) => (
+        {Object.entries(ANALYSES[analysisKey].files).map(
+        ([role, config]) => (
           <UploadCsv
             key={role}
             token={session.access_token}
             analysisKey={analysisKey}
             fileRole={role}
+            requiredColumns={config.required_columns.map(c =>
+              c.toLowerCase().replace(/\s+/g, "_")
+            )}
           />
-        ))}
+        )
+        )}
+
 
         {/* Run analysis */}
         <RunAnalysis
