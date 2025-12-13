@@ -66,9 +66,11 @@ export default function App() {
             token={session.access_token}
             analysisKey={analysisKey}
             fileRole={role}
-            requiredColumns={config.required_columns.map(c =>
-              c.toLowerCase().replace(/\s+/g, "_")
-            )}
+            requiredColumns={
+              (config.required_columns ?? []).map(c =>
+                c.toLowerCase().replace(/\s+/g, "_")
+              )
+            }
           />
         )
         )}
