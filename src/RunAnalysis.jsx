@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function RunAnalysis({ token, onDone, disabled }) {
+export default function RunAnalysis({ token, onDone, disabled, analysisKey }) {
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState("2024-01-01");
   const [endDate, setEndDate] = useState("2024-03-31");
@@ -11,7 +11,7 @@ export default function RunAnalysis({ token, onDone, disabled }) {
     setLoading(true);
 
     await fetch(
-      `${import.meta.env.VITE_API_BASE}/analyze?start_date=${startDate}&end_date=${endDate}`,
+      `${import.meta.env.VITE_API_BASE}/analyze?analysis_key=${analysisKey}&start_date=${startDate}&end_date=${endDate}`,
       {
         method: "POST",
         headers: {

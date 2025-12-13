@@ -1,18 +1,13 @@
-import { useState } from "react";
-
-export default function UploadCsv({ token }) {
-  const [status, setStatus] = useState("");
-
-  async function uploadFile(file) {
+export default function UploadCsv({ token, analysisKey, fileRole }) {
+  async function upload(e) {
+    const file = e.target.files[0];
     if (!file) return;
-
-    setStatus(`Uploading ${file.name}...`);
 
     const form = new FormData();
     form.append("file", file);
 
-    const res = await fetch(
-      `${import.meta.env.VITE_API_BASE}/upload`,
+    await fetch(
+      `${import.meta.env.VITE_API_BASE}/upload?analysis_key=${analysisKey}&file_role=${fileRole}`,
       {
         method: "POST",
         headers: {
@@ -22,26 +17,15 @@ export default function UploadCsv({ token }) {
       }
     );
 
-    if (!res.ok) {
-      const err = await res.text();
-      setStatus(`Error: ${err}`);
-      return;
-    }
-
-    setStatus(`Uploaded ${file.name} ✅`);
+    alert(`${fileRole} uploaded`);
   }
 
   return (
-    <div className="bg-white p-4 rounded shadow mb-6">
-      <h3 className="font-semibold mb-2">Upload CSV</h3>
-
-      <input
-        type="file"
-        accept=".csv"
-        onChange={(e) => uploadFile(e.target.files[0])}
-      />
-
-      {status && <div className="text-sm mt-2">{status}</div>}
+    <div className="mb-3">
+      <label className="block text-sm mb-1 capitalize">
+        Upload {fileRole} file
+      </label>
+      <input type="file" accept=".csv" onChange={upload} />
     </div>
   );
 }
