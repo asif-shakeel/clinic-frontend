@@ -14,6 +14,15 @@ export default function RunAnalysis({
   async function run() {
     if (loading || disabled) return;
 
+
+    const missing = Object.entries(selectedFiles)
+    .filter(([_, fileId]) => !fileId)
+    .map(([role]) => role);
+
+    if (missing.length) {
+    alert(`Select files for: ${missing.join(", ")}`);
+    return;
+    }
     setLoading(true);
 
     const res = await fetch(
