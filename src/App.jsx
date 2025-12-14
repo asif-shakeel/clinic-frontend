@@ -65,7 +65,8 @@ export default function App() {
   if (!analyses || !analysisKey) return <div>Loading…</div>;
 
   const analysis = analyses[analysisKey];
-
+  console.log("analysis:", analysis);
+  
   async function deleteSelectedFiles() {
     if (!selectedForDelete.length) return;
 
@@ -111,29 +112,28 @@ export default function App() {
 
             {/* ANALYSIS SELECTOR */}
             <select
-              className="border p-2 rounded w-full mb-4"
+              className="border p-2 rounded w-full mb-2"
               value={analysisKey}
               onChange={(e) => {
                 setAnalysisKey(e.target.value);
                 setSelectedFiles({});
               }}
             >
-              {/* ANALYSIS OUTPUTS */}
-              {analysis.outputs && analysis.outputs.length > 0 && (
-                <div className="mb-4 text-sm text-gray-600">
-                  <span className="font-medium">Outputs:</span>{" "}
-                  {analysis.outputs.join(" • ")}
-                </div>
-              )}
-
-
-
               {Object.entries(analyses).map(([k, a]) => (
                 <option key={k} value={k}>
                   {a.label}
                 </option>
               ))}
             </select>
+
+            {/* ANALYSIS OUTPUTS (THIS MUST BE OUTSIDE THE SELECT) */}
+            {analysis.outputs && analysis.outputs.length > 0 && (
+              <div className="mb-4 text-sm text-gray-600">
+                <span className="font-medium">Outputs:</span>{" "}
+                {analysis.outputs.join(" • ")}
+              </div>
+            )}
+
 
             {/* FILE ASSIGNMENT */}
             {Object.entries(analysis.files).map(([role, cfg]) => (
