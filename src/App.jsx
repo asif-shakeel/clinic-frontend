@@ -118,6 +118,13 @@ export default function App() {
                 setSelectedFiles({});
               }}
             >
+              {/* ANALYSIS OUTPUTS */}
+              {analysis?.outputs && (
+                <div className="text-sm text-gray-600 mb-4">
+                  Outputs: {analysis.outputs.join(", ").replaceAll(".csv", "")}
+                </div>
+              )}
+
               {Object.entries(analyses).map(([k, a]) => (
                 <option key={k} value={k}>
                   {a.label}
