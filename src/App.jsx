@@ -119,11 +119,14 @@ export default function App() {
               }}
             >
               {/* ANALYSIS OUTPUTS */}
-              {analysis?.outputs && (
-                <div className="text-sm text-gray-600 mb-4">
-                  Outputs: {analysis.outputs.join(", ").replaceAll(".csv", "")}
+              {analysis.outputs && analysis.outputs.length > 0 && (
+                <div className="mb-4 text-sm text-gray-600">
+                  <span className="font-medium">Outputs:</span>{" "}
+                  {analysis.outputs.join(" • ")}
                 </div>
               )}
+
+
 
               {Object.entries(analyses).map(([k, a]) => (
                 <option key={k} value={k}>
