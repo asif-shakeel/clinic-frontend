@@ -66,40 +66,33 @@ export default function App() {
 
   const analysis = analyses[analysisKey];
 
-
   async function deleteSelectedFiles() {
     if (!selectedForDelete.length) return;
 
     for (const id of selectedForDelete) {
-      await fetch(
-        `${import.meta.env.VITE_API_BASE}/files/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        }
-      );
-    }
-
-    // refresh file list
-    const res = await fetch(
-      `${import.meta.env.VITE_API_BASE}/files`,
-      {
+      await fetch(`${import.meta.env.VITE_API_BASE}/files/${id}`, {
+        method: "DELETE",
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
-      }
-    );
+      });
+    }
+
+    const res = await fetch(`${import.meta.env.VITE_API_BASE}/files`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
     setFiles(await res.json());
     setSelectedForDelete([]);
   }
 
-
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-7xl mx-auto">
 
+        {/* HEADER */}
         <div className="flex justify-between mb-6">
           <h2 className="text-xl font-semibold">Dashboard</h2>
           <button
@@ -110,104 +103,113 @@ export default function App() {
           </button>
         </div>
 
-        {/* ANALYSIS SELECTOR */}
-        <select
-          className="border p-2 rounded w-full mb-4"
-          value={analysisKey}
-          onChange={(e) => {
-            setAnalysisKey(e.target.value);
-            setSelectedFiles({});
-          }}
-        >
-          {Object.entries(analyses).map(([k, a]) => (
-            <option key={k} value={k}>
-              {a.label}
-            </option>
-          ))}
-        </select>
+        {/* TWO COLUMN LAYOUT */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-      {/* FILE MANAGEMENT */}
-      <div className="mb-6 p-3 bg-white border rounded">
-        <div className="font-medium mb-2">Your files</div>
+          {/* LEFT: MAIN WORKFLOW */}
+          <div className="md:col-span-2">
 
-        <div className="max-h-40 overflow-y-auto space-y-1 text-sm">
-          {files.map((f) => (
-            <label key={f.id} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={selectedForDelete.includes(f.id)}
-                onChange={(e) =>
-                  setSelectedForDelete((prev) =>
-                    e.target.checked
-                      ? [...prev, f.id]
-                      : prev.filter((x) => x !== f.id)
-                  )
-                }
-              />
-              {f.filename}
-            </label>
-          ))}
-        </div>
-
-        <button
-          onClick={deleteSelectedFiles}
-          disabled={!selectedForDelete.length}
-          className="mt-2 px-3 py-1 text-sm bg-red-600 text-white rounded disabled:bg-gray-400"
-        >
-          Delete selected
-        </button>
-      </div>
-
-        {/* FILE ASSIGNMENT */}
-        {Object.entries(analysis.files).map(([role, cfg]) => (
-          <div key={role} className="mb-4 p-3 bg-white rounded border">
-            <div className="font-medium mb-1 capitalize">{role}</div>
-
-            <div className="text-xs text-gray-500 mb-2">
-              Required columns:{" "}
-              <span className="font-mono">
-                {cfg.required_columns.join(", ")}
-              </span>
-            </div>
-
+            {/* ANALYSIS SELECTOR */}
             <select
-              className="border p-2 rounded w-full"
-              value={selectedFiles[role] || ""}
-              onChange={(e) =>
-                setSelectedFiles((prev) => ({
-                  ...prev,
-                  [role]: e.target.value,
-                }))
-              }
+              className="border p-2 rounded w-full mb-4"
+              value={analysisKey}
+              onChange={(e) => {
+                setAnalysisKey(e.target.value);
+                setSelectedFiles({});
+              }}
             >
-              <option value="">Select file</option>
-              {files.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.filename}
+              {Object.entries(analyses).map(([k, a]) => (
+                <option key={k} value={k}>
+                  {a.label}
                 </option>
               ))}
             </select>
+
+            {/* FILE ASSIGNMENT */}
+            {Object.entries(analysis.files).map(([role, cfg]) => (
+              <div key={role} className="mb-4 p-3 bg-white rounded border">
+                <div className="font-medium mb-1 capitalize">{role}</div>
+
+                <div className="text-xs text-gray-500 mb-2">
+                  Required columns:{" "}
+                  <span className="font-mono">
+                    {cfg.required_columns.join(", ")}
+                  </span>
+                </div>
+
+                <select
+                  className="border p-2 rounded w-full"
+                  value={selectedFiles[role] || ""}
+                  onChange={(e) =>
+                    setSelectedFiles((prev) => ({
+                      ...prev,
+                      [role]: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="">Select file</option>
+                  {files.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.filename}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+
+            {/* UPLOAD */}
+            <UploadCsv token={session.access_token} />
+
+            {/* RUN */}
+            <RunAnalysis
+              token={session.access_token}
+              analysisKey={analysisKey}
+              selectedFiles={selectedFiles}
+              disabled={latestJobStatus === "running"}
+              onDone={setCurrentJobId}
+            />
+
+            {/* JOBS */}
+            <JobsList
+              token={session.access_token}
+              jobId={currentJobId}
+              onStatusChange={setLatestJobStatus}
+            />
           </div>
-        ))}
 
-        {/* OPTIONAL UPLOAD */}
-        <UploadCsv token={session.access_token} />
+          {/* RIGHT: FILE LIST + DELETE */}
+          <div className="bg-white border rounded p-3 h-fit">
+            <div className="font-medium mb-2">Your files</div>
 
-        {/* RUN */}
-        <RunAnalysis
-          token={session.access_token}
-          analysisKey={analysisKey}
-          selectedFiles={selectedFiles}
-          disabled={latestJobStatus === "running"}
-          onDone={setCurrentJobId}
-        />
+            <div className="max-h-64 overflow-y-auto space-y-1 text-sm mb-2">
+              {files.map((f) => (
+                <label key={f.id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedForDelete.includes(f.id)}
+                    onChange={(e) =>
+                      setSelectedForDelete((prev) =>
+                        e.target.checked
+                          ? [...prev, f.id]
+                          : prev.filter((x) => x !== f.id)
+                      )
+                    }
+                  />
+                  {f.filename}
+                </label>
+              ))}
+            </div>
 
-        {/* JOBS */}
-        <JobsList
-          token={session.access_token}
-          jobId={currentJobId}
-          onStatusChange={setLatestJobStatus}
-        />
+            <button
+              onClick={deleteSelectedFiles}
+              disabled={!selectedForDelete.length}
+              className="w-full px-3 py-1 text-sm bg-red-600 text-white rounded disabled:bg-gray-400"
+            >
+              Delete selected
+            </button>
+          </div>
+
+        </div>
       </div>
     </div>
   );
