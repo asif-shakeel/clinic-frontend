@@ -158,7 +158,7 @@ export default function App() {
             ))}
 
             {/* UPLOAD */}
-            <UploadCsv token={session.access_token} />
+
 
             {/* RUN */}
             <RunAnalysis
@@ -207,6 +207,10 @@ export default function App() {
             >
               Delete selected
             </button>
+            <div className="mt-4">
+            <UploadCsv token={session.access_token} />
+            </div>
+
           </div>
 
         </div>
