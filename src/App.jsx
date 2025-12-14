@@ -65,8 +65,8 @@ export default function App() {
   if (!analyses || !analysisKey) return <div>Loading…</div>;
 
   const analysis = analyses[analysisKey];
-  console.log("analysis:", analysis);
-  
+  // console.log("analysis:", analysis);
+
   async function deleteSelectedFiles() {
     if (!selectedForDelete.length) return;
 
