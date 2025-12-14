@@ -17,6 +17,8 @@ export default function App() {
   const [currentJobId, setCurrentJobId] = useState(null);
   const [latestJobStatus, setLatestJobStatus] = useState(null);
 
+  const [selectedForDelete, setSelectedForDelete] = useState([]);
+
   // AUTH
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -64,6 +66,36 @@ export default function App() {
 
   const analysis = analyses[analysisKey];
 
+
+  async function deleteSelectedFiles() {
+    if (!selectedForDelete.length) return;
+
+    for (const id of selectedForDelete) {
+      await fetch(
+        `${import.meta.env.VITE_API_BASE}/files/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+    }
+
+    // refresh file list
+    const res = await fetch(
+      `${import.meta.env.VITE_API_BASE}/files`,
+      {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      }
+    );
+    setFiles(await res.json());
+    setSelectedForDelete([]);
+  }
+
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-3xl mx-auto">
@@ -93,6 +125,38 @@ export default function App() {
             </option>
           ))}
         </select>
+
+      {/* FILE MANAGEMENT */}
+      <div className="mb-6 p-3 bg-white border rounded">
+        <div className="font-medium mb-2">Your files</div>
+
+        <div className="max-h-40 overflow-y-auto space-y-1 text-sm">
+          {files.map((f) => (
+            <label key={f.id} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={selectedForDelete.includes(f.id)}
+                onChange={(e) =>
+                  setSelectedForDelete((prev) =>
+                    e.target.checked
+                      ? [...prev, f.id]
+                      : prev.filter((x) => x !== f.id)
+                  )
+                }
+              />
+              {f.filename}
+            </label>
+          ))}
+        </div>
+
+        <button
+          onClick={deleteSelectedFiles}
+          disabled={!selectedForDelete.length}
+          className="mt-2 px-3 py-1 text-sm bg-red-600 text-white rounded disabled:bg-gray-400"
+        >
+          Delete selected
+        </button>
+      </div>
 
         {/* FILE ASSIGNMENT */}
         {Object.entries(analysis.files).map(([role, cfg]) => (
